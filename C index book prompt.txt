@@ -1,0 +1,169 @@
+Topic
+
+Inside the Real Life & Career Success Path of a {{career_name}}
+
+Subtopic
+Daily Responsibilities, Work Environment, Career Entry Path, Job Landing Strategy, Challenges, Lifestyle & Industry Reality
+
+
+LLM prompt:
+ 
+Create a premium-quality Level 1 career guidebook specifically for "{{career_name}}".
+
+This book must be highly practical, deeply informative, career-focused, student-friendly, and action-oriented.
+
+The output must be divided into 5 major sections, where each section acts like a standalone mini-book.
+
+Generate exactly 20 high-quality questions with detailed answers PER SECTION.
+Total Output = 100 Questions & Answers.
+
+Every answer must provide real-world value, practical steps, clarity, and confidence for someone who wants to successfully enter and grow in the "{{career_name}}" profession.
+
+Avoid generic advice, filler content, repeated ideas, or vague statements.
+
+==================================================
+SECTION 1: COMPLETE CAREER GUIDE
+==================================================
+
+Cover in depth:
+
+- What is {{career_name}} and what professionals actually do
+- Core purpose and importance of this career in society
+- Key roles and responsibilities
+- Daily tasks and expectations
+- Technical skills required
+- Soft skills required
+- Personality traits suited for this career
+- Educational path after 10th, 12th, diploma, degree
+- Required certifications/licenses
+- Tools, technologies, equipment, and software used
+- Industries where this career exists
+- Entry-level to senior-level growth path
+- Salary range (India + global)
+- Benefits and perks
+- Future demand and market opportunities
+- Common myths about this career
+- Biggest mistakes beginners make
+- Why people succeed or fail in this career
+
+==================================================
+SECTION 2: SKILLS, LEARNING & JOB-READY GUIDE
+==================================================
+
+Cover in depth:
+
+- Core technical skills (beginner to advanced)
+- Essential tools/software/platforms used in {{career_name}}
+- Soft skills that increase hiring chances
+- Communication and teamwork importance
+- Leadership skills for future growth
+- Beginner learning roadmap
+- Intermediate growth roadmap
+- Advanced mastery roadmap
+- Best certifications and courses
+- Free and paid learning resources
+- Practical projects to build portfolio
+- Internship preparation skills
+- Resume-building skills
+- Interview preparation skills
+- How to become job-ready faster
+- Mistakes students make while learning
+- How to stand out from competition
+
+==================================================
+SECTION 3: STEP-BY-STEP CAREER ENTRY ROADMAP
+==================================================
+
+Make this section extremely structured, practical, and timeline-based.
+
+Cover:
+
+- Best path after 10th
+- Best path after 12th
+- Diploma route
+- Degree route
+- Alternative route (self-learning / freelancing / apprenticeships)
+- Best colleges or institutions
+- Year-wise roadmap (1 year / 3 year / 5 year plan)
+- Internship roadmap
+- Portfolio building roadmap
+- Networking roadmap
+- How to get first internship
+- How to get first freelance project
+- How to get first job in {{career_name}}
+- Job application strategy
+- LinkedIn / job portal strategy
+- Interview cracking roadmap
+- How to switch into this career from another field
+- Backup career options related to {{career_name}}
+
+==================================================
+SECTION 4: JOBS, SALARY & OPPORTUNITY GUIDE
+==================================================
+
+Make this section realistic, market-based, and highly practical.
+
+Cover:
+
+- Entry-level job roles
+- Mid-level job roles
+- Senior leadership roles
+- Specializations within {{career_name}}
+- Salary for freshers (India)
+- Salary with 3+ years experience
+- Salary with 5+ years experience
+- International salary opportunities
+- Freelancing income potential
+- Business / entrepreneurship opportunities
+- Remote job opportunities
+- Industries actively hiring
+- Countries with high demand
+- Growth sectors for next 10 years
+- Recession-proof opportunities
+- Future AI impact on this career
+- Best-paying specializations
+
+==================================================
+SECTION 5: REAL LIFE, INDUSTRY REALITY & SUCCESS INSIGHTS
+==================================================
+
+Make this section realistic, honest, motivating, and experience-based.
+
+Cover:
+
+- A real day in the life of a {{career_name}}
+- Morning to evening work routine
+- Work environment
+- Team structure and reporting hierarchy
+- Tools used daily
+- Work pressure and deadlines
+- Stress level and mental demands
+- Work-life balance reality
+- Common real-world challenges
+- Client / boss / team expectations
+- Career satisfaction level
+- Pros of this career
+- Cons of this career
+- Hidden truths nobody tells beginners
+- Real expectations vs reality
+- How top professionals succeed
+- How average professionals get stuck
+- Long-term lifestyle impact
+
+==================================================
+FINAL OUTPUT RULES (STRICT)
+==================================================
+
+- Generate exactly 20 questions and answers for each section
+- Total = 100 high-quality Q&A
+- Use clear section headings
+- Use simple, modern, professional English
+- Make answers practical and detailed
+- Include actionable steps wherever possible
+- Use bullet points where useful
+- Avoid repeating same ideas across sections
+- Keep content specific to "{{career_name}}"
+- Think like an expert career coach + industry mentor
+- Help the reader understand how to ENTER, LAND A JOB, GROW, and SUCCEED in this career
+
+This book must feel like a premium professional career success guide for "{{career_name}}".
