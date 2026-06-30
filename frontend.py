@@ -15,7 +15,10 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    try:
+        return templates.TemplateResponse(request=request, name="index.html")
+    except TypeError:
+        return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/categories")
 async def get_categories():
@@ -50,3 +53,43 @@ async def proxy_start(request: Request):
             return JSONResponse(json.loads(res_body))
     except Exception as e:
         return JSONResponse({"message": f"Failed to start: {str(e)}"})
+
+if __name__ == "__main__":
+    def run_server(port: int, app_import_str: str):
+        import socket
+        import os
+        import uvicorn
+        
+        hostname = socket.gethostname().upper()
+        dev_keywords = ['MSI', 'I3ADMIN-PRECISION-TOWER-5810', 'DESKTOP-KAL0REJ']
+        is_local = any(kw in hostname for kw in dev_keywords)
+        
+        production_domain = os.getenv("PRODUCTION_DOMAIN", "myblocks.in")
+        is_production = (production_domain.upper() in hostname) or not is_local
+        
+        config = {
+            "host": "0.0.0.0",
+            "port": port
+        }
+        
+        if is_production and not is_local:
+            ssl_key_path = f"/etc/letsencrypt/live/{production_domain}/privkey.pem"
+            ssl_cert_path = f"/etc/letsencrypt/live/{production_domain}/fullchain.pem"
+            
+            if os.path.exists(ssl_key_path) and os.path.exists(ssl_cert_path):
+                print(f"[SSL] Enabled - Running in PRODUCTION mode with HTTPS")
+                print(f"   Certificate: {ssl_cert_path}")
+                print(f"   Private Key: {ssl_key_path}")
+                config["ssl_keyfile"] = ssl_key_path
+                config["ssl_certfile"] = ssl_cert_path
+            else:
+                print(f"[WARNING] SSL certificates not found at expected paths:")
+                print(f"   Key: {ssl_key_path}")
+                print(f"   Cert: {ssl_cert_path}")
+                print(f"   Falling back to HTTP mode")
+        else:
+            print(f"[HTTP] Running in LOCAL/DEV mode with HTTP (no SSL)")
+            
+        uvicorn.run(app_import_str, **config)
+
+    run_server(7900, "frontend:app")
