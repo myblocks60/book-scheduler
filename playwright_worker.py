@@ -6,6 +6,8 @@ import mysql.connector
 from pathlib import Path
 from playwright.async_api import async_playwright, TimeoutError
 from datetime import datetime
+from myblocks_login import login_to_myblocks
+
 
 def add_db_columns():
     import mysql.connector
@@ -53,6 +55,7 @@ CUSTOM_RAG_USERID = args.rag_userid
 
 # --- CONFIGURATION ---
 DOWNLOAD_DIR = Path("downloads")
+SCREENSHOTS_DIR = Path("screenshots")
 LOG_FILE = "automation_status_worker.log"
 PROCESSED_FILE = "processed_roles.txt"
 
@@ -72,6 +75,7 @@ DB_CONFIG = {
 
 # Setup
 DOWNLOAD_DIR.mkdir(exist_ok=True)
+SCREENSHOTS_DIR.mkdir(exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -337,7 +341,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 logging.info("Waiting for generation to complete and download to start...")
 
                 await page.screenshot(
-                    path=f"before_generation_{career}.png",
+                    path=SCREENSHOTS_DIR / f"before_generation_{career}.png",
                     full_page=True
                 )
 
@@ -357,7 +361,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         )
 
         await page.screenshot(
-            path=f"after_generation_{career}.png",
+            path=SCREENSHOTS_DIR / f"after_generation_{career}.png",
             full_page=True
         )
 
@@ -438,7 +442,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 )
 
                 await page.screenshot(
-                    path=f"rag_connected_{career}.png",
+                    path=SCREENSHOTS_DIR / f"rag_connected_{career}.png",
                     full_page=True
                 )
 
@@ -523,7 +527,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
             )
 
         await page.screenshot(
-            path=f"dropdown_loaded_{career}.png",
+            path=SCREENSHOTS_DIR / f"dropdown_loaded_{career}.png",
             full_page=True
         )
 
@@ -589,7 +593,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         )
 
         await page.screenshot(
-            path=f"add_to_rag_clicked_{career}.png",
+            path=SCREENSHOTS_DIR / f"add_to_rag_clicked_{career}.png",
             full_page=True
         )
 
@@ -628,7 +632,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
     except Exception as e:
 
         await page.screenshot(
-            path=f"FAILED_{career}.png",
+            path=SCREENSHOTS_DIR / f"FAILED_{career}.png",
             full_page=True
         )
 
@@ -676,6 +680,16 @@ async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(accept_downloads=True)
+
+        # Perform login once so session is authenticated for all pages
+        logging.info("Performing MyBlocks login session setup...")
+        login_page = await context.new_page()
+        try:
+            await login_to_myblocks(login_page)
+        except Exception as login_err:
+            logging.error(f"MyBlocks session login failed: {login_err}")
+        finally:
+            await login_page.close()
 
         rag_connected = False
 

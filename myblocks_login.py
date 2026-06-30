@@ -1,9 +1,6 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait, Select
-from selenium.webdriver.support import expected_conditions as EC
+import asyncio
+import logging
+from playwright.async_api import async_playwright, Page
 
 # Target URLs
 LOGIN_URL = "https://myblocks.in/login"
@@ -13,61 +10,57 @@ QA_APP_URL = "https://myblocks.in/businessuserhome"
 USERNAME = "test11"
 PASSWORD = "test11"
 
-def main():
-    # Setup Chrome options
-    options = Options()
-    # You can set headless to False if you want to see the browser UI
-    options.add_argument("--start-maximized")
+async def login_to_myblocks(page: Page, username=USERNAME, password=PASSWORD):
+    """
+    Performs the login flow on the given Playwright Page.
+    """
+    logging.info(f"Navigating to {LOGIN_URL}...")
+    await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
     
-    # Initialize WebDriver
-    print("Launching browser...")
-    driver = webdriver.Chrome(options=options)
+    # Enter Username
+    logging.info("Entering username...")
+    await page.wait_for_selector("#username", state="visible", timeout=15000)
+    await page.fill("#username", username)
     
+    # Enter Password
+    logging.info("Entering password...")
+    await page.wait_for_selector("#password", state="visible", timeout=15000)
+    await page.fill("#password", password)
+    
+    # Select User Type
+    logging.info("Selecting user type...")
+    await page.wait_for_selector("#userType", state="visible", timeout=15000)
+    await page.select_option("#userType", value="BUSINESSAPP")
+    
+    # Click Login
+    logging.info("Clicking login button...")
+    await page.wait_for_selector("#login-button", state="visible", timeout=15000)
+    await page.click("#login-button")
+    
+    # Wait for login to process (usually redirects to QA_APP_URL)
+    logging.info("Waiting for login redirect...")
     try:
-        # Navigate to login page
-        print(f"Navigating to {LOGIN_URL}...")
-        driver.get(LOGIN_URL)
-        
-        # Wait for elements and perform login
-        wait = WebDriverWait(driver, 10)
-        
-        # Enter Username
-        print("Entering username...")
-        username_field = wait.until(EC.presence_of_element_located((By.ID, "username")))
-        username_field.clear()
-        username_field.send_keys(USERNAME)
-        
-        # Enter Password
-        print("Entering password...")
-        password_field = wait.until(EC.presence_of_element_located((By.ID, "password")))
-        password_field.clear()
-        password_field.send_keys(PASSWORD)
-        
-        # Select User Type
-        print("Selecting user type...")
-        usertype_dropdown = wait.until(EC.presence_of_element_located((By.ID, "userType")))
-        Select(usertype_dropdown).select_by_value("BUSINESSAPP")
-        
-        # Click Login
-        print("Clicking login button...")
-        login_button = wait.until(EC.presence_of_element_located((By.ID, "login-button")))
-        login_button.click()
-        
-        # Wait for login to process
-        print("Waiting for login process...")
-        time.sleep(5)
-        
-        # Open the QA App URL
-        print(f"Opening QA App URL: {QA_APP_URL}...")
-        driver.get(QA_APP_URL)
-        
-        # Keep it open for 10 seconds to verify success
-        print("Successfully opened the QA App URL. Keeping browser open for 10 seconds...")
-        time.sleep(10)
-        
-    finally:
-        print("Closing browser.")
-        driver.quit()
+        await page.wait_for_url("**/businessuserhome", timeout=30000)
+        logging.info("Redirected to business user home successfully.")
+    except Exception as e:
+        logging.warning(f"Did not detect redirect to businessuserhome, checking current URL: {page.url}")
+
+async def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    print("Launching browser...")
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        context = await browser.new_context()
+        page = await context.new_page()
+        try:
+            await login_to_myblocks(page)
+            print(f"Opening QA App URL: {QA_APP_URL}...")
+            await page.goto(QA_APP_URL, wait_until="domcontentloaded")
+            print("Successfully opened the QA App URL. Keeping browser open for 10 seconds...")
+            await page.wait_for_timeout(10000)
+        finally:
+            print("Closing browser.")
+            await browser.close()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
