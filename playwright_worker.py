@@ -47,6 +47,8 @@ parser.add_argument('--login_username', required=True)
 parser.add_argument('--login_password', required=True)
 parser.add_argument('--llm_provider', required=True)
 parser.add_argument('--llm_model', required=True)
+parser.add_argument('--userid', default='919')
+parser.add_argument('--firmid', default='5')
 args = parser.parse_args()
 
 CUSTOM_PROMPT = args.prompt
@@ -60,6 +62,8 @@ CUSTOM_LOGIN_USERNAME = args.login_username
 CUSTOM_LOGIN_PASSWORD = args.login_password
 CUSTOM_LLM_PROVIDER = args.llm_provider
 CUSTOM_LLM_MODEL = args.llm_model
+CUSTOM_USERID = args.userid
+CUSTOM_FIRMID = args.firmid
 
 # --- CONFIGURATION ---
 DOWNLOAD_DIR = Path("downloads")
@@ -114,6 +118,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()]
 )
+logging.info(f"Worker process started. Provider: {CUSTOM_LLM_PROVIDER}, Model: {CUSTOM_LLM_MODEL}")
 
 # Load processed roles from file
 def load_processed_roles():
@@ -287,8 +292,16 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         except Exception as e:
             logging.warning(f"Could not select LLM Provider: {e}")
 
-        # Wait briefly for dynamic options to populate
-        await asyncio.sleep(1)
+        # Wait for the target model option to populate in the dropdown DOM
+        logging.info(f"Waiting for LLM Model option '{CUSTOM_LLM_MODEL}' to populate...")
+        try:
+            await page.wait_for_selector(
+                f'xpath=//select[option[@value="{CUSTOM_LLM_MODEL}"]] | xpath=//select[option[text()="{CUSTOM_LLM_MODEL}"]] | xpath=//*[@id="root"]/div/div/div[2]/div[6]/select/option[@value="{CUSTOM_LLM_MODEL}"]', 
+                timeout=15000
+            )
+            logging.info(f"Target model option '{CUSTOM_LLM_MODEL}' is available in DOM.")
+        except Exception as e:
+            logging.warning(f"Timeout waiting for model option: {e}. Attempting selection anyway...")
 
         logging.info(f"Selecting LLM Model: {CUSTOM_LLM_MODEL}")
         try:
@@ -331,7 +344,9 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 await capture_screenshot(page, "generation_completed_screen")
             
             download = await download_info.value
-            save_path = DOWNLOAD_DIR / f"{career.replace(' ', '_')}.pdf"
+            target_dir = DOWNLOAD_DIR / CUSTOM_FIRMID / CUSTOM_USERID
+            target_dir.mkdir(parents=True, exist_ok=True)
+            save_path = target_dir / f"{career.replace(' ', '_')}.pdf"
             await download.save_as(save_path)
             logging.info(f"PDF Downloaded Successfully: {save_path}")
 

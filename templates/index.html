@@ -141,6 +141,8 @@
         </div>
 
         <form id="gen-form">
+            <input type="hidden" id="userid" name="userid" value="">
+            <input type="hidden" id="firmid" name="firmid" value="">
             <div class="section-header">1. Database Configuration</div>
             <div class="form-group">
                 <label for="table_name">Target Database Table (for status updates):</label>
@@ -316,6 +318,9 @@ FINAL OUTPUT RULES:
             // Load MCP Providers and Models from cookies
             const userid = getCookie('userid') || '919';
             const firmid = getCookie('firmid') || '5';
+
+            document.getElementById('userid').value = userid;
+            document.getElementById('firmid').value = firmid;
 
             try {
                 const response = await fetch(`${API_URL}/api/mcp/keys?userid=${encodeURIComponent(userid)}&firmid=${encodeURIComponent(firmid)}`);

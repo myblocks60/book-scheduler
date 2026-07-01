@@ -17,24 +17,28 @@ app.add_middleware(
 
 app.state.status = "Idle"
 
-def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str, llm_provider: str, llm_model: str):
+def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str, llm_provider: str, llm_model: str, userid: str, firmid: str):
     app.state.status = "Running background automation..."
+    cmd = [
+        "python", "playwright_worker.py", 
+        "--prompt", prompt, 
+        "--query", query,
+        "--table", table_name,
+        "--topic", topic,
+        "--subtopic", subtopic,
+        "--rag_category", rag_category,
+        "--rag_userid", rag_userid,
+        "--login_username", login_username,
+        "--login_password", login_password,
+        "--llm_provider", llm_provider,
+        "--llm_model", llm_model,
+        "--userid", userid,
+        "--firmid", firmid
+    ]
+    print(f"[BACKEND] Launching playwright_worker with command: {' '.join(cmd)}")
     try:
         process = subprocess.Popen(
-            [
-                "python", "playwright_worker.py", 
-                "--prompt", prompt, 
-                "--query", query,
-                "--table", table_name,
-                "--topic", topic,
-                "--subtopic", subtopic,
-                "--rag_category", rag_category,
-                "--rag_userid", rag_userid,
-                "--login_username", login_username,
-                "--login_password", login_password,
-                "--llm_provider", llm_provider,
-                "--llm_model", llm_model
-            ],
+            cmd,
             stderr=subprocess.PIPE,
             text=True
         )
@@ -58,8 +62,11 @@ async def start_generation(
     login_username: str = Form(...),
     login_password: str = Form(...),
     llm_provider: str = Form(...),
-    llm_model: str = Form(...)
+    llm_model: str = Form(...),
+    userid: str = Form("919"),
+    firmid: str = Form("5")
 ):
+    print(f"[BACKEND] Received start request. llm_provider={llm_provider}, llm_model={llm_model}")
     rag_userid = "1559"
     if app.state.status == "Running background automation...":
         return JSONResponse({"message": "Already running! Please wait."})
@@ -73,7 +80,7 @@ async def start_generation(
 
     app.state.status = "Starting..."
     background_tasks.add_task(
-        run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password, llm_provider, llm_model
+        run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password, llm_provider, llm_model, userid, firmid
     )
     return JSONResponse({"message": "Batch Generation Started in Background!"})
 
