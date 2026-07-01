@@ -251,7 +251,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                     'xpath=//*[@id="root"]/div/div/div[2]/div[5]/select',
                     'xpath=/html/body/div/div/div/div[2]/div[5]/select',
                     'select:has(option[value="GROQ"])',
-                    'select:has(option[value="OPENAI"])'
+                    'select:has(option[value="MYBLOCKS_SERVERS 1"])'
                 ],
                 CUSTOM_LLM_PROVIDER
             )

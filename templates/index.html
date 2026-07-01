@@ -1,40 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulk Book Generator UI</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; }
-        input[type="text"], input[type="password"], textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
-        textarea { resize: vertical; }
-        button { background-color: #007bff; color: white; border: none; padding: 15px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; transition: 0.3s; width: 100%; font-weight: bold; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
-        .status { margin-top: 20px; padding: 15px; border-radius: 6px; background-color: #e9ecef; font-weight: bold; text-align: center; font-size: 1.1em; border-left: 5px solid #007bff; }
-        .warning { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ffeeba; font-size: 0.9em; }
-        .row { display: flex; gap: 20px; }
-        .col { flex: 1; }
-        .hint { font-size: 0.85em; color: #666; margin-top: 4px; display: block; }
-        .section-header { border-bottom: 2px solid #eee; margin: 30px 0 20px; padding-bottom: 5px; color: #007bff; font-size: 1.2em; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #e9ecef;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+            border-left: 5px solid #007bff;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeeba;
+            font-size: 0.9em;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        .hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .section-header {
+            border-bottom: 2px solid #eee;
+            margin: 30px 0 20px;
+            padding-bottom: 5px;
+            color: #007bff;
+            font-size: 1.2em;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>📚 Bulk Book Generator</h1>
-        
+
         <div class="warning">
-            <strong>⚠️ Security Warning:</strong> This interface executes SQL directly. Use internally only. Ensure <code>{% raw %}{{career_name}}{% endraw %}</code> is used as a placeholder in the prompt fields.
+            <strong>⚠️ Security Warning:</strong> This interface executes SQL directly. Use internally only. Ensure
+            <code>{% raw %}{{career_name}}{% endraw %}</code> is used as a placeholder in the prompt fields.
         </div>
 
         <div class="status" id="status-box">
             Current Status: <span>Connecting to Backend...</span>
         </div>
 
-        <div id="log-console" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 0.85em; margin-top: 10px; height: 150px; overflow-y: auto; display: none;">
+        <div id="log-console"
+            style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 0.85em; margin-top: 10px; height: 150px; overflow-y: auto; display: none;">
             <strong>Live Logs:</strong><br>
             <div id="log-content"></div>
         </div>
@@ -44,46 +145,58 @@
             <div class="form-group">
                 <label for="table_name">Target Database Table (for status updates):</label>
                 <input type="text" id="table_name" name="table_name" value="book_gen_source_dtls" required>
-                <span class="hint">The script will UPDATE this table's <code>processed</code> column to YES/FAILED based on the ID.</span>
+                <span class="hint">The script will UPDATE this table's <code>processed</code> column to YES/FAILED based
+                    on the ID.</span>
             </div>
 
             <div class="form-group">
                 <label for="query">Custom SQL Query (to fetch pending roles):</label>
-                <textarea id="query" name="query" rows="2" required>SELECT d.source_detail_id as id, d.detail_name as career_name, m.source_name as topic FROM book_gen_source_master m JOIN book_gen_source_dtls d ON m.source_master_id = d.source_master_id WHERE m.is_active = 1 AND d.is_active = 1 LIMIT 50</textarea>
-                <span class="hint">Use <code>job_role_id as id</code> to match your database schema. Must return columns named <code>id</code> and <code>career_name</code>.</span>
+                <textarea id="query" name="query" rows="2"
+                    required>SELECT d.source_detail_id as id, d.detail_name as career_name, m.source_name as topic FROM book_gen_source_master m JOIN book_gen_source_dtls d ON m.source_master_id = d.source_master_id WHERE m.is_active = 1 AND d.is_active = 1 LIMIT 50</textarea>
+                <span class="hint">Use <code>job_role_id as id</code> to match your database schema. Must return columns
+                    named <code>id</code> and <code>career_name</code>.</span>
             </div>
 
             <div class="section-header">2. Generation Parameters</div>
             <div class="row">
                 <div class="col form-group">
                     <label for="subtopic">Subtopic (Field 1):</label>
-                    <textarea id="subtopic" name="subtopic" rows="3" required>Organ Functions, Normal Tests, Lab Values, Diseases, Treatment & Prevention</textarea>
+                    <textarea id="subtopic" name="subtopic" rows="3"
+                        required>Organ Functions, Normal Tests, Lab Values, Diseases, Treatment & Prevention</textarea>
                 </div>
                 <div class="col form-group">
                     <label for="topic">Topic (Field 2):</label>
-                    <textarea id="topic" name="topic" rows="3" required>Comprehensive Health Guide and Diagnostics for {% raw %}{{career_name}}{% endraw %}</textarea>
+                    <textarea id="topic" name="topic" rows="3"
+                        required>Comprehensive Health Guide and Diagnostics for {% raw %}{{career_name}}{% endraw %}</textarea>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="rag_category">RAG Category:</label>
-                <select id="rag_category" name="rag_category" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;" required>
+                <select id="rag_category" name="rag_category"
+                    style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;"
+                    required>
                     <option value="">Loading categories...</option>
                 </select>
-                <span class="hint">The category to select in the RAG dropdown (Fetched dynamically for User 1559).</span>
+                <span class="hint">The category to select in the RAG dropdown (Fetched dynamically for User
+                    1559).</span>
             </div>
 
             <div class="row">
                 <div class="col form-group">
                     <label for="llm_provider">LLM Provider:</label>
-                    <select id="llm_provider" name="llm_provider" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;" required>
+                    <select id="llm_provider" name="llm_provider"
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;"
+                        required>
                         <option value="">Loading providers...</option>
                     </select>
                     <span class="hint">LLM Provider configured in API Key Manager.</span>
                 </div>
                 <div class="col form-group">
                     <label for="llm_model">Model Name:</label>
-                    <select id="llm_model" name="llm_model" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;" required>
+                    <select id="llm_model" name="llm_model"
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;"
+                        required>
                         <option value="">Select a provider first...</option>
                     </select>
                     <span class="hint">LLM Model configured in API Key Manager.</span>
@@ -94,11 +207,11 @@
             <div class="row">
                 <div class="col form-group">
                     <label for="login_username">Username:</label>
-                    <input type="text" id="login_username" name="login_username" value="test11" required>
+                    <input type="text" id="login_username" name="login_username" value="" required>
                 </div>
                 <div class="col form-group">
                     <label for="login_password">Password:</label>
-                    <input type="password" id="login_password" name="login_password" value="test11" required>
+                    <input type="password" id="login_password" name="login_password" value="" required>
                 </div>
             </div>
 
@@ -159,7 +272,8 @@ FINAL OUTPUT RULES:
 - Generate exactly 20 questions and answers for each section (Total 100)
 - Use clear section headings and bullet points
 - Keep content highly specific and medically accurate regarding "{% raw %}{{career_name}}{% endraw %}"</textarea>
-                <span class="hint">Use <code>{% raw %}{{career_name}}{% endraw %}</code> as a placeholder. It will be replaced dynamically for each role.</span>
+                <span class="hint">Use <code>{% raw %}{{career_name}}{% endraw %}</code> as a placeholder. It will be
+                    replaced dynamically for each role.</span>
             </div>
 
             <button type="submit">🚀 Start Bulk Generation</button>
@@ -202,16 +316,16 @@ FINAL OUTPUT RULES:
             // Load MCP Providers and Models from cookies
             const userid = getCookie('userid') || '919';
             const firmid = getCookie('firmid') || '5';
-            
+
             try {
                 const response = await fetch(`${API_URL}/api/mcp/keys?userid=${encodeURIComponent(userid)}&firmid=${encodeURIComponent(firmid)}`);
                 const data = await response.json();
                 const providerSelect = document.getElementById('llm_provider');
                 const modelSelect = document.getElementById('llm_model');
-                
+
                 providerSelect.innerHTML = '<option value="">Select LLM Provider...</option>';
                 modelSelect.innerHTML = '<option value="">Select a provider first...</option>';
-                
+
                 if (data.success && data.providers) {
                     mcpProvidersMap = data.providers;
                     Object.keys(mcpProvidersMap).forEach(prov => {
@@ -233,7 +347,7 @@ FINAL OUTPUT RULES:
             const selectedProvider = e.target.value;
             const modelSelect = document.getElementById('llm_model');
             modelSelect.innerHTML = '';
-            
+
             if (selectedProvider && mcpProvidersMap[selectedProvider]) {
                 mcpProvidersMap[selectedProvider].forEach(model => {
                     const option = document.createElement('option');
@@ -249,7 +363,7 @@ FINAL OUTPUT RULES:
         document.getElementById('gen-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            
+
             try {
                 const response = await fetch(`${API_URL}/start`, {
                     method: 'POST',
@@ -267,7 +381,7 @@ FINAL OUTPUT RULES:
                 .then(res => res.json())
                 .then(data => {
                     document.querySelector('#status-box span').innerText = data.status;
-                    
+
                     if (data.logs) {
                         document.getElementById('log-console').style.display = 'block';
                         document.getElementById('log-content').innerText = data.logs;
@@ -283,4 +397,5 @@ FINAL OUTPUT RULES:
     </script>
     <script src="/localhost_settings.js"></script>
 </body>
+
 </html>
