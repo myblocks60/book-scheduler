@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import urllib.request
 import urllib.parse
@@ -19,10 +19,33 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    import socket
+    hostname = socket.gethostname().upper()
+    dev_keywords = ['MSI', 'I3ADMIN-PRECISION-TOWER-5810', 'DESKTOP-KAL0REJ']
+    is_local = any(kw in hostname for kw in dev_keywords)
+    production_domain = os.getenv("PRODUCTION_DOMAIN", "myblocks.in")
+    is_production = (production_domain.upper() in hostname) or not is_local
+
+    if is_production:
+        userid = request.query_params.get("userid") or request.cookies.get("userid")
+        firmid = request.query_params.get("firmid") or request.cookies.get("firmid")
+        if not userid or not firmid:
+            return RedirectResponse("https://myblocks.in/login")
+
     try:
-        return templates.TemplateResponse(request=request, name="index.html")
+        response = templates.TemplateResponse(request=request, name="index.html")
     except TypeError:
-        return templates.TemplateResponse("index.html", {"request": request})
+        response = templates.TemplateResponse("index.html", {"request": request})
+
+    if is_production:
+        query_userid = request.query_params.get("userid")
+        query_firmid = request.query_params.get("firmid")
+        if query_userid:
+            response.set_cookie("userid", query_userid)
+        if query_firmid:
+            response.set_cookie("firmid", query_firmid)
+
+    return response
 
 @app.get("/categories")
 def get_categories():
