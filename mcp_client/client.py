@@ -50,6 +50,36 @@ def call_mcp_tool(userid: str, firmid: str, provider: str = None) -> list:
                                   
                                 else:
                                     post_url = f"{messages_base}{data_content}"
+                                
+                                # Send the POST request to call the tool immediately
+                                payload = {
+                                    "jsonrpc": "2.0",
+                                    "id": 1,
+                                    "method": "tools/call",
+                                    "params": {
+                                        "name": "list_api_keys",
+                                        "arguments": {
+                                            "userid": str(userid),
+                                            "firmid": str(firmid)
+                                        }
+                                    }
+                                }
+                                if provider:
+                                    payload["params"]["arguments"]["provider"] = provider
+                                    
+                                post_data = json.dumps(payload).encode('utf-8')
+                                post_req = urllib.request.Request(
+                                    post_url,
+                                    data=post_data,
+                                    headers={"Content-Type": "application/json", "User-Agent": "FastAPI-MCP-Client"}
+                                )
+                                try:
+                                    # Send POST request
+                                    with urllib.request.urlopen(post_req, context=ctx, timeout=10) as post_res:
+                                        post_res.read() # Consume response
+                                except Exception as post_err:
+                                    print("Error sending tool call POST:", post_err)
+                                    break
                         
                         elif current_event == "message":
                             try:
@@ -68,44 +98,6 @@ def call_mcp_tool(userid: str, firmid: str, provider: str = None) -> list:
                     current_event = line[len("event:"):].strip()
                 elif line.startswith("data:"):
                     line_buffer.append(line[len("data:"):].strip())
-                
-                # Once session_id is found, we trigger the POST request in the background/sequentially
-                if session_id and not post_url:
-                    post_url = f"{messages_base}/messages?sessionId={session_id}"
-                
-                if post_url and result is None and len(line_buffer) == 0:
-                    # Send the POST request to call the tool
-                    payload = {
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "method": "tools/call",
-                        "params": {
-                            "name": "list_api_keys",
-                            "arguments": {
-                                "userid": str(userid),
-                                "firmid": str(firmid)
-                            }
-                        }
-                    }
-                    if provider:
-                        payload["params"]["arguments"]["provider"] = provider
-                        
-                    post_data = json.dumps(payload).encode('utf-8')
-                    post_req = urllib.request.Request(
-                        post_url,
-                        data=post_data,
-                        headers={"Content-Type": "application/json", "User-Agent": "FastAPI-MCP-Client"}
-                    )
-                    try:
-                        # Send POST request
-                        with urllib.request.urlopen(post_req, context=ctx, timeout=10) as post_res:
-                            post_res.read() # Consume response
-                    except Exception as post_err:
-                        print("Error sending tool call POST:", post_err)
-                        break
-                    
-                    # Reset post_url so we don't send multiple POSTs
-                    post_url = None
                     
             if result:
                 # Extract results content
