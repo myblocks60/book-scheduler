@@ -10,7 +10,7 @@
         h1 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; }
-        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], input[type="password"], textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
         textarea { resize: vertical; }
         button { background-color: #007bff; color: white; border: none; padding: 15px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; transition: 0.3s; width: 100%; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
@@ -71,6 +71,18 @@
                     <option value="">Loading categories...</option>
                 </select>
                 <span class="hint">The category to select in the RAG dropdown (Fetched dynamically for User 1559).</span>
+            </div>
+
+            <div class="section-header">3. MyBlocks Login Credentials</div>
+            <div class="row">
+                <div class="col form-group">
+                    <label for="login_username">Username:</label>
+                    <input type="text" id="login_username" name="login_username" value="test11" required>
+                </div>
+                <div class="col form-group">
+                    <label for="login_password">Password:</label>
+                    <input type="password" id="login_password" name="login_password" value="test11" required>
+                </div>
             </div>
 
             <div class="form-group">

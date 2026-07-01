@@ -17,7 +17,7 @@ app.add_middleware(
 
 app.state.status = "Idle"
 
-def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str):
+def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str):
     app.state.status = "Running background automation..."
     try:
         process = subprocess.Popen(
@@ -29,7 +29,9 @@ def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: s
                 "--topic", topic,
                 "--subtopic", subtopic,
                 "--rag_category", rag_category,
-                "--rag_userid", rag_userid
+                "--rag_userid", rag_userid,
+                "--login_username", login_username,
+                "--login_password", login_password
             ],
             stderr=subprocess.PIPE,
             text=True
@@ -50,7 +52,9 @@ async def start_generation(
     table_name: str = Form(...),
     topic: str = Form(...),
     subtopic: str = Form(...),
-    rag_category: str = Form(...)
+    rag_category: str = Form(...),
+    login_username: str = Form(...),
+    login_password: str = Form(...)
 ):
     rag_userid = "1559"
     if app.state.status == "Running background automation...":
@@ -64,7 +68,9 @@ async def start_generation(
             pass
 
     app.state.status = "Starting..."
-    background_tasks.add_task(run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid)
+    background_tasks.add_task(
+        run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password
+    )
     return JSONResponse({"message": "Batch Generation Started in Background!"})
 
 @app.get("/categories")

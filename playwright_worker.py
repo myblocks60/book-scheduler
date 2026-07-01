@@ -43,6 +43,8 @@ parser.add_argument('--topic', required=True)
 parser.add_argument('--subtopic', required=True)
 parser.add_argument('--rag_category', required=True)
 parser.add_argument('--rag_userid', required=True)
+parser.add_argument('--login_username', required=True)
+parser.add_argument('--login_password', required=True)
 args = parser.parse_args()
 
 CUSTOM_PROMPT = args.prompt
@@ -52,12 +54,14 @@ CUSTOM_TOPIC = args.topic
 CUSTOM_SUBTOPIC = args.subtopic
 CUSTOM_RAG_CATEGORY = args.rag_category
 CUSTOM_RAG_USERID = args.rag_userid
+CUSTOM_LOGIN_USERNAME = args.login_username
+CUSTOM_LOGIN_PASSWORD = args.login_password
 
 # --- CONFIGURATION ---
 DOWNLOAD_DIR = Path("downloads")
-SCREENSHOTS_DIR = Path("screenshots")
+DATA_DIR = Path("data")
 LOG_FILE = "automation_status_worker.log"
-PROCESSED_FILE = "processed_roles.txt"
+PROCESSED_FILE = DATA_DIR / "processed_roles.txt"
 
 # URLs
 CINDEX_URL = "https://myblocks.in/book-gen/"
@@ -70,12 +74,12 @@ DB_CONFIG = {
     'password': 'GOeg&*$*657', # Add your password here
     'database': 'nrkindex_trn' # Add your DB name here
 
-   
+
 }
 
 # Setup
 DOWNLOAD_DIR.mkdir(exist_ok=True)
-SCREENSHOTS_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -119,6 +123,17 @@ async def click_with_fallback(page, selectors, timeout=5000):
         except Exception:
             continue
     raise Exception(f"All click selectors failed: {selectors}")
+
+async def select_with_fallback(page, selectors, value, timeout=5000):
+    for sel in selectors:
+        try:
+            locator = page.locator(sel)
+            await locator.first.wait_for(state="visible", timeout=timeout)
+            await locator.first.select_option(value)
+            return
+        except Exception:
+            continue
+    raise Exception(f"All select selectors failed for value: {value} with selectors: {selectors}")
 
 async def wait_for_generation_complete(page):
     tasks = [
@@ -212,6 +227,24 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         logging.info("Prompt entered successfully")
 
         # ----------------------------------------------------
+        # SELECT LLM PROVIDER
+        # ----------------------------------------------------
+        logging.info("Selecting LLM Provider...")
+        try:
+            await select_with_fallback(
+                page,
+                [
+                    'select:has(option[value="GROQ"])',
+                    'xpath=//*[@id="root"]/div/div/div[2]/div[5]/select',
+                    'xpath=/html/body/div/div/div/div[2]/div[5]/select'
+                ],
+                "GROQ"
+            )
+            logging.info("LLM Provider selected successfully")
+        except Exception as e:
+            logging.warning(f"Could not select LLM Provider: {e}")
+
+        # ----------------------------------------------------
         # GENERATE BOOK & DOWNLOAD
         # ----------------------------------------------------
         logging.info("Searching for Generate Book button...")
@@ -230,11 +263,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 logging.info("Generate Book button clicked")
                 logging.info("Waiting for generation to complete and download to start...")
 
-                await page.screenshot(
-                    path=SCREENSHOTS_DIR / f"before_generation_{career}.png",
-                    full_page=True
-                )
-
                 await wait_for_generation_complete(page)
             
             download = await download_info.value
@@ -248,11 +276,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
 
         logging.info(
             "Generation completion signal received."
-        )
-
-        await page.screenshot(
-            path=SCREENSHOTS_DIR / f"after_generation_{career}.png",
-            full_page=True
         )
 
         # ----------------------------------------------------
@@ -329,11 +352,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
 
                 logging.info(
                     "RAG connection completed"
-                )
-
-                await page.screenshot(
-                    path=SCREENSHOTS_DIR / f"rag_connected_{career}.png",
-                    full_page=True
                 )
 
             except Exception as rag_error:
@@ -416,11 +434,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 f"Could not locate dropdown containing '{CUSTOM_RAG_CATEGORY}'"
             )
 
-        await page.screenshot(
-            path=SCREENSHOTS_DIR / f"dropdown_loaded_{career}.png",
-            full_page=True
-        )
-
         logging.info(
             f"RAG Dropdown Options: {rag_options}"
         )
@@ -482,11 +495,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
             "Add to RAG button clicked"
         )
 
-        await page.screenshot(
-            path=SCREENSHOTS_DIR / f"add_to_rag_clicked_{career}.png",
-            full_page=True
-        )
-
         try:
             # STEP 1: Wait for loading state (button becomes disabled or shows spinner)
             await page.wait_for_function("""
@@ -520,11 +528,6 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         )
 
     except Exception as e:
-
-        await page.screenshot(
-            path=SCREENSHOTS_DIR / f"FAILED_{career}.png",
-            full_page=True
-        )
 
         logging.exception(
             f"FAILURE ON {career}"
@@ -575,7 +578,7 @@ async def main():
         logging.info("Performing MyBlocks login session setup...")
         login_page = await context.new_page()
         try:
-            await login_to_myblocks(login_page)
+            await login_to_myblocks(login_page, username=CUSTOM_LOGIN_USERNAME, password=CUSTOM_LOGIN_PASSWORD)
         except Exception as login_err:
             logging.error(f"MyBlocks session login failed: {login_err}")
         finally:
