@@ -100,7 +100,8 @@ def get_mcp_keys(userid: str, firmid: str):
         for k in keys:
             prov = k.get("provider")
             model = k.get("model")
-            if prov and model:
+            status = k.get("status")
+            if prov and model and status == "ACTIVE":
                 if prov not in providers:
                     providers[prov] = []
                 if model not in providers[prov]:
