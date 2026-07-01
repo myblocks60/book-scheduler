@@ -78,21 +78,21 @@ async def start_generation(
     return JSONResponse({"message": "Batch Generation Started in Background!"})
 
 @app.get("/categories")
-async def get_categories():
+def get_categories():
     import urllib.request
     import json
     url = "https://dev.myblocks.in:12095/api/rag/categories"
     data = json.dumps({"username": "1559", "userid": "1559"}).encode('utf-8')
     req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
 
 @app.get("/api/mcp/keys")
-async def get_mcp_keys(userid: str, firmid: str):
+def get_mcp_keys(userid: str, firmid: str):
     try:
         from mcp_client.client import call_mcp_tool
         keys = call_mcp_tool(userid, firmid)
@@ -110,7 +110,7 @@ async def get_mcp_keys(userid: str, firmid: str):
         return {"success": False, "error": str(e)}
 
 @app.get("/status")
-async def get_status():
+def get_status():
     logs = ""
     if os.path.exists("automation_status_worker.log"):
         try:

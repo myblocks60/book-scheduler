@@ -25,31 +25,31 @@ async def read_root(request: Request):
         return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/categories")
-async def get_categories():
+def get_categories():
     url = "https://dev.myblocks.in:12095/api/rag/categories"
     data = json.dumps({"username": "1559", "userid": "1559"}).encode('utf-8')
     req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
 
 @app.get("/api/mcp/keys")
-async def get_mcp_keys(userid: str, firmid: str):
+def get_mcp_keys(userid: str, firmid: str):
     url = f"http://127.0.0.1:7901/api/mcp/keys?userid={urllib.parse.quote(userid)}&firmid={urllib.parse.quote(firmid)}"
     try:
-        with urllib.request.urlopen(url) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
 
 @app.get("/status")
-async def get_status():
+def get_status():
     try:
-        with urllib.request.urlopen("http://127.0.0.1:7901/status") as response:
+        with urllib.request.urlopen("http://127.0.0.1:7901/status", timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
@@ -62,7 +62,7 @@ async def proxy_start(request: Request):
     data = urllib.parse.urlencode(form_data).encode('utf-8')
     req = urllib.request.Request("http://127.0.0.1:7901/start", data=data, headers={'Content-Type': 'application/x-www-form-urlencoded'})
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:

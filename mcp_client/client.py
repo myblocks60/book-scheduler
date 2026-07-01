@@ -28,7 +28,7 @@ def call_mcp_tool(userid: str, firmid: str, provider: str = None) -> list:
     
     # Establish connection
     try:
-        with urllib.request.urlopen(req, context=ctx) as response:
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
             # We must read line-by-line as it's an event stream
             line_buffer = []
             current_event = None
@@ -47,6 +47,7 @@ def call_mcp_tool(userid: str, firmid: str, provider: str = None) -> list:
                                 session_id = query.get("sessionId", [None])[0]
                                 if data_content.startswith("http"):
                                     post_url = data_content
+                                  
                                 else:
                                     post_url = f"{messages_base}{data_content}"
                         
@@ -97,7 +98,7 @@ def call_mcp_tool(userid: str, firmid: str, provider: str = None) -> list:
                     )
                     try:
                         # Send POST request
-                        with urllib.request.urlopen(post_req, context=ctx) as post_res:
+                        with urllib.request.urlopen(post_req, context=ctx, timeout=10) as post_res:
                             post_res.read() # Consume response
                     except Exception as post_err:
                         print("Error sending tool call POST:", post_err)
