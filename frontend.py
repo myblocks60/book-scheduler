@@ -5,9 +5,31 @@ import urllib.request
 import urllib.parse
 import json
 import os
+import ssl
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+# Determine backend base URL and SSL context for local requests
+hostname = os.socket.gethostname().upper() if hasattr(os, "socket") else ""
+import socket
+hostname = socket.gethostname().upper()
+dev_keywords = ['MSI', 'I3ADMIN-PRECISION-TOWER-5810', 'DESKTOP-KAL0REJ']
+is_local = any(kw in hostname for kw in dev_keywords)
+production_domain = os.getenv("PRODUCTION_DOMAIN", "myblocks.in")
+is_production = (production_domain.upper() in hostname) or not is_local
+
+ssl_key_path = f"/etc/letsencrypt/live/{production_domain}/privkey.pem"
+ssl_cert_path = f"/etc/letsencrypt/live/{production_domain}/fullchain.pem"
+has_ssl = is_production and not is_local and os.path.exists(ssl_key_path) and os.path.exists(ssl_cert_path)
+
+if has_ssl:
+    BACKEND_URL_BASE = "https://127.0.0.1:7901"
+    ssl_context = ssl._create_unverified_context()
+else:
+    BACKEND_URL_BASE = "http://127.0.0.1:7901"
+    ssl_context = None
+
 
 @app.get("/localhost_settings.js")
 async def get_localhost_settings():
@@ -61,9 +83,9 @@ def get_categories():
 
 @app.get("/api/mcp/keys")
 def get_mcp_keys(userid: str, firmid: str):
-    url = f"http://127.0.0.1:7901/api/mcp/keys?userid={urllib.parse.quote(userid)}&firmid={urllib.parse.quote(firmid)}"
+    url = f"{BACKEND_URL_BASE}/api/mcp/keys?userid={urllib.parse.quote(userid)}&firmid={urllib.parse.quote(firmid)}"
     try:
-        with urllib.request.urlopen(url, timeout=10) as response:
+        with urllib.request.urlopen(url, context=ssl_context, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
@@ -72,7 +94,7 @@ def get_mcp_keys(userid: str, firmid: str):
 @app.get("/status")
 def get_status():
     try:
-        with urllib.request.urlopen("http://127.0.0.1:7901/status", timeout=10) as response:
+        with urllib.request.urlopen(f"{BACKEND_URL_BASE}/status", context=ssl_context, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
@@ -83,9 +105,9 @@ async def proxy_start(request: Request):
     # Proxy the form data to backend
     form_data = await request.form()
     data = urllib.parse.urlencode(form_data).encode('utf-8')
-    req = urllib.request.Request("http://127.0.0.1:7901/start", data=data, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+    req = urllib.request.Request(f"{BACKEND_URL_BASE}/start", data=data, headers={'Content-Type': 'application/x-www-form-urlencoded'})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, context=ssl_context, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:
