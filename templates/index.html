@@ -73,6 +73,23 @@
                 <span class="hint">The category to select in the RAG dropdown (Fetched dynamically for User 1559).</span>
             </div>
 
+            <div class="row">
+                <div class="col form-group">
+                    <label for="llm_provider">LLM Provider:</label>
+                    <select id="llm_provider" name="llm_provider" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;" required>
+                        <option value="">Loading providers...</option>
+                    </select>
+                    <span class="hint">LLM Provider configured in API Key Manager.</span>
+                </div>
+                <div class="col form-group">
+                    <label for="llm_model">Model Name:</label>
+                    <select id="llm_model" name="llm_model" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;" required>
+                        <option value="">Select a provider first...</option>
+                    </select>
+                    <span class="hint">LLM Model configured in API Key Manager.</span>
+                </div>
+            </div>
+
             <div class="section-header">3. MyBlocks Login Credentials</div>
             <div class="row">
                 <div class="col form-group">
@@ -150,8 +167,17 @@ FINAL OUTPUT RULES:
     </div>
 
     <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
         const backendPort = 7901;
         const API_URL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
+
+        let mcpProvidersMap = {};
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -171,6 +197,52 @@ FINAL OUTPUT RULES:
                 }
             } catch (err) {
                 document.getElementById('rag_category').innerHTML = '<option value="">Error loading categories</option>';
+            }
+
+            // Load MCP Providers and Models from cookies
+            const userid = getCookie('userid') || '919';
+            const firmid = getCookie('firmid') || '5';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/mcp/keys?userid=${encodeURIComponent(userid)}&firmid=${encodeURIComponent(firmid)}`);
+                const data = await response.json();
+                const providerSelect = document.getElementById('llm_provider');
+                const modelSelect = document.getElementById('llm_model');
+                
+                providerSelect.innerHTML = '<option value="">Select LLM Provider...</option>';
+                modelSelect.innerHTML = '<option value="">Select a provider first...</option>';
+                
+                if (data.success && data.providers) {
+                    mcpProvidersMap = data.providers;
+                    Object.keys(mcpProvidersMap).forEach(prov => {
+                        const option = document.createElement('option');
+                        option.value = prov;
+                        option.textContent = prov;
+                        providerSelect.appendChild(option);
+                    });
+                } else {
+                    providerSelect.innerHTML = '<option value="">Failed to load providers</option>';
+                }
+            } catch (err) {
+                document.getElementById('llm_provider').innerHTML = '<option value="">Error loading providers</option>';
+            }
+        });
+
+        // Cascading models dropdown
+        document.getElementById('llm_provider').addEventListener('change', (e) => {
+            const selectedProvider = e.target.value;
+            const modelSelect = document.getElementById('llm_model');
+            modelSelect.innerHTML = '';
+            
+            if (selectedProvider && mcpProvidersMap[selectedProvider]) {
+                mcpProvidersMap[selectedProvider].forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
+                });
+            } else {
+                modelSelect.innerHTML = '<option value="">Select a provider first...</option>';
             }
         });
 
@@ -209,5 +281,6 @@ FINAL OUTPUT RULES:
                 });
         }, 3000);
     </script>
+    <script src="/localhost_settings.js"></script>
 </body>
 </html>

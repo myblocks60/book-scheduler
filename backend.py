@@ -17,7 +17,7 @@ app.add_middleware(
 
 app.state.status = "Idle"
 
-def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str):
+def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str, llm_provider: str, llm_model: str):
     app.state.status = "Running background automation..."
     try:
         process = subprocess.Popen(
@@ -31,7 +31,9 @@ def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: s
                 "--rag_category", rag_category,
                 "--rag_userid", rag_userid,
                 "--login_username", login_username,
-                "--login_password", login_password
+                "--login_password", login_password,
+                "--llm_provider", llm_provider,
+                "--llm_model", llm_model
             ],
             stderr=subprocess.PIPE,
             text=True
@@ -54,7 +56,9 @@ async def start_generation(
     subtopic: str = Form(...),
     rag_category: str = Form(...),
     login_username: str = Form(...),
-    login_password: str = Form(...)
+    login_password: str = Form(...),
+    llm_provider: str = Form(...),
+    llm_model: str = Form(...)
 ):
     rag_userid = "1559"
     if app.state.status == "Running background automation...":
@@ -69,7 +73,7 @@ async def start_generation(
 
     app.state.status = "Starting..."
     background_tasks.add_task(
-        run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password
+        run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password, llm_provider, llm_model
     )
     return JSONResponse({"message": "Batch Generation Started in Background!"})
 
@@ -86,6 +90,24 @@ async def get_categories():
             return JSONResponse(json.loads(res_body))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
+
+@app.get("/api/mcp/keys")
+async def get_mcp_keys(userid: str, firmid: str):
+    try:
+        from mcp_client.client import call_mcp_tool
+        keys = call_mcp_tool(userid, firmid)
+        providers = {}
+        for k in keys:
+            prov = k.get("provider")
+            model = k.get("model")
+            if prov and model:
+                if prov not in providers:
+                    providers[prov] = []
+                if model not in providers[prov]:
+                    providers[prov].append(model)
+        return {"success": True, "providers": providers}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/status")
 async def get_status():

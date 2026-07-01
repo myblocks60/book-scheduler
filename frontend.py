@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, Response, JSONResponse
+from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 import urllib.request
 import urllib.parse
@@ -8,6 +8,10 @@ import os
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+@app.get("/localhost_settings.js")
+async def get_localhost_settings():
+    return FileResponse("templates/localhost_settings.js")
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
@@ -27,6 +31,16 @@ async def get_categories():
     req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req) as response:
+            res_body = response.read()
+            return JSONResponse(json.loads(res_body))
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+@app.get("/api/mcp/keys")
+async def get_mcp_keys(userid: str, firmid: str):
+    url = f"http://127.0.0.1:7901/api/mcp/keys?userid={urllib.parse.quote(userid)}&firmid={urllib.parse.quote(firmid)}"
+    try:
+        with urllib.request.urlopen(url) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:

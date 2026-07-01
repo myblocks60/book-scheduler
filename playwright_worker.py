@@ -45,6 +45,8 @@ parser.add_argument('--rag_category', required=True)
 parser.add_argument('--rag_userid', required=True)
 parser.add_argument('--login_username', required=True)
 parser.add_argument('--login_password', required=True)
+parser.add_argument('--llm_provider', required=True)
+parser.add_argument('--llm_model', required=True)
 args = parser.parse_args()
 
 CUSTOM_PROMPT = args.prompt
@@ -56,6 +58,8 @@ CUSTOM_RAG_CATEGORY = args.rag_category
 CUSTOM_RAG_USERID = args.rag_userid
 CUSTOM_LOGIN_USERNAME = args.login_username
 CUSTOM_LOGIN_PASSWORD = args.login_password
+CUSTOM_LLM_PROVIDER = args.llm_provider
+CUSTOM_LLM_MODEL = args.llm_model
 
 # --- CONFIGURATION ---
 DOWNLOAD_DIR = Path("downloads")
@@ -237,21 +241,44 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         logging.info("Prompt entered successfully")
 
         # ----------------------------------------------------
-        # SELECT LLM PROVIDER
+        # SELECT LLM PROVIDER & MODEL
         # ----------------------------------------------------
-        logging.info("Finding LLM Provider select box...")
+        logging.info(f"Selecting LLM Provider: {CUSTOM_LLM_PROVIDER}")
         try:
-            await wait_for_fallback(
+            await select_with_fallback(
                 page,
                 [
-                    'select:has(option[value="GROQ"])',
                     'xpath=//*[@id="root"]/div/div/div[2]/div[5]/select',
-                    'xpath=/html/body/div/div/div/div[2]/div[5]/select'
-                ]
+                    'xpath=/html/body/div/div/div/div[2]/div[5]/select',
+                    'select:has(option[value="GROQ"])',
+                    'select:has(option[value="OPENAI"])'
+                ],
+                CUSTOM_LLM_PROVIDER
             )
-            logging.info("LLM Provider select box found successfully")
+            logging.info("LLM Provider selected successfully")
         except Exception as e:
-            logging.warning(f"Could not find LLM Provider select box: {e}")
+            logging.warning(f"Could not select LLM Provider: {e}")
+
+        # Wait briefly for dynamic options to populate
+        await asyncio.sleep(1)
+
+        logging.info(f"Selecting LLM Model: {CUSTOM_LLM_MODEL}")
+        try:
+            await select_with_fallback(
+                page,
+                [
+                    'xpath=//*[@id="root"]/div/div/div[2]/div[6]/select',
+                    'xpath=/html/body/div/div/div/div[2]/div[6]/select',
+                    f'select:has(option[value="{CUSTOM_LLM_MODEL}"])',
+                    f'select:has(option:has-text("{CUSTOM_LLM_MODEL}"))',
+                    'select:nth-of-type(2)'
+                ],
+                CUSTOM_LLM_MODEL
+            )
+            logging.info("LLM Model selected successfully")
+        except Exception as e:
+            logging.warning(f"Could not select LLM Model: {e}")
+
 
         # ----------------------------------------------------
         # GENERATE BOOK & DOWNLOAD
