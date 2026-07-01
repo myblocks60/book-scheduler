@@ -81,6 +81,31 @@ DB_CONFIG = {
 
 }
 
+# Check environment
+import socket
+HOSTNAME = socket.gethostname().upper()
+DEV_KEYWORDS = ['MSI', 'I3ADMIN-PRECISION-TOWER-5810', 'DESKTOP-KAL0REJ']
+IS_LOCAL = any(kw in HOSTNAME for kw in DEV_KEYWORDS)
+
+screenshot_counter = 0
+
+async def capture_screenshot(page, action_name):
+    global screenshot_counter
+    if not IS_LOCAL:
+        return
+    screenshot_counter += 1
+    screenshot_dir = os.path.join("screenshots", "steps")
+    os.makedirs(screenshot_dir, exist_ok=True)
+    # Sanitise name for file system
+    clean_action_name = "".join(c for c in action_name if c.isalnum() or c in (' ', '_', '-')).rstrip()
+    filename = f"{screenshot_counter:03d}_{clean_action_name.replace(' ', '_')}.png"
+    filepath = os.path.join(screenshot_dir, filename)
+    try:
+        await page.screenshot(path=filepath)
+        logging.info(f"Step screenshot saved to {filepath}")
+    except Exception as e:
+        logging.warning(f"Failed to capture screenshot for '{action_name}': {e}")
+
 # Setup
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
@@ -111,6 +136,7 @@ async def fill_with_fallback(page, selectors, value, timeout=5000):
             locator = page.locator(sel)
             await locator.first.wait_for(state="visible", timeout=timeout)
             await locator.first.fill(value)
+            await capture_screenshot(page, f"filled_{value[:20]}")
             return
         except Exception:
             continue
@@ -123,6 +149,7 @@ async def click_with_fallback(page, selectors, timeout=5000):
             await locator.first.wait_for(state="visible", timeout=timeout)
             # Use JS click to bypass pointer interception
             await locator.first.evaluate("node => node.click()")
+            await capture_screenshot(page, f"clicked_{sel[:20]}")
             return
         except Exception:
             continue
@@ -134,6 +161,7 @@ async def select_with_fallback(page, selectors, value, timeout=5000):
             locator = page.locator(sel)
             await locator.first.wait_for(state="visible", timeout=timeout)
             await locator.first.select_option(value)
+            await capture_screenshot(page, f"selected_{value[:20]}")
             return
         except Exception:
             continue
@@ -300,6 +328,7 @@ async def process_career(context, career, base_prompt, connect_rag=False):
                 logging.info("Waiting for generation to complete and download to start...")
 
                 await wait_for_generation_complete(page)
+                await capture_screenshot(page, "generation_completed_screen")
             
             download = await download_info.value
             save_path = DOWNLOAD_DIR / f"{career.replace(' ', '_')}.pdf"
@@ -554,10 +583,12 @@ async def process_career(context, career, base_prompt, connect_rag=False):
             }
             """, timeout=120000)
             logging.info("Add to RAG completed successfully based on UI state")
+            await capture_screenshot(page, "add_to_rag_completed")
             print(f"✅ SUCCESS: Book '{career}' was successfully added to RAG '{CUSTOM_RAG_CATEGORY}'", flush=True)
         except Exception as wait_err:
             logging.warning(f"Wait for 'Adding' UI state timed out or failed: {wait_err}. Assuming completed based on fallback wait.")
             await page.wait_for_timeout(15000)
+            await capture_screenshot(page, "add_to_rag_after_fallback_wait")
 
         logging.info(
             f"BOOK SUCCESSFULLY PROCESSED: {career}"
@@ -608,7 +639,24 @@ async def main():
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(accept_downloads=True)
+        
+        # Check if running locally/localhost
+        import socket
+        hostname = socket.gethostname().upper()
+        dev_keywords = ['MSI', 'I3ADMIN-PRECISION-TOWER-5810', 'DESKTOP-KAL0REJ']
+        is_local = any(kw in hostname for kw in dev_keywords)
+        
+        context_args = {"accept_downloads": True}
+        if is_local:
+            video_dir = os.path.join("downloads", "videos")
+            os.makedirs(video_dir, exist_ok=True)
+            context_args["record_video_dir"] = video_dir
+            context_args["record_video_size"] = {"width": 1280, "height": 720}
+            logging.info(f"Local/localhost detected. Playwright video recording enabled: {video_dir}")
+        else:
+            logging.info("Production mode detected. Playwright video recording disabled.")
+            
+        context = await browser.new_context(**context_args)
 
         # Perform login once so session is authenticated for all pages
         logging.info("Performing MyBlocks login session setup...")
@@ -645,6 +693,7 @@ async def main():
 
             await asyncio.sleep(2)
            
+        await context.close()
         await browser.close()
     
     logging.info(f"✅ BATCH COMPLETED. Processed {len(filtered_rows)} roles.")
