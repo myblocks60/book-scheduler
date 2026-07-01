@@ -135,6 +135,16 @@ async def select_with_fallback(page, selectors, value, timeout=5000):
             continue
     raise Exception(f"All select selectors failed for value: {value} with selectors: {selectors}")
 
+async def wait_for_fallback(page, selectors, timeout=5000):
+    for sel in selectors:
+        try:
+            locator = page.locator(sel)
+            await locator.first.wait_for(state="visible", timeout=timeout)
+            return locator.first
+        except Exception:
+            continue
+    raise Exception(f"All wait selectors failed: {selectors}")
+
 async def wait_for_generation_complete(page):
     tasks = [
         page.wait_for_selector("button:has-text('Generate Book'):not([disabled])", timeout=400000),
@@ -229,20 +239,19 @@ async def process_career(context, career, base_prompt, connect_rag=False):
         # ----------------------------------------------------
         # SELECT LLM PROVIDER
         # ----------------------------------------------------
-        logging.info("Selecting LLM Provider...")
+        logging.info("Finding LLM Provider select box...")
         try:
-            await select_with_fallback(
+            await wait_for_fallback(
                 page,
                 [
                     'select:has(option[value="GROQ"])',
                     'xpath=//*[@id="root"]/div/div/div[2]/div[5]/select',
                     'xpath=/html/body/div/div/div/div[2]/div[5]/select'
-                ],
-                "GROQ"
+                ]
             )
-            logging.info("LLM Provider selected successfully")
+            logging.info("LLM Provider select box found successfully")
         except Exception as e:
-            logging.warning(f"Could not select LLM Provider: {e}")
+            logging.warning(f"Could not find LLM Provider select box: {e}")
 
         # ----------------------------------------------------
         # GENERATE BOOK & DOWNLOAD
