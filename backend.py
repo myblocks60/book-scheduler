@@ -15,10 +15,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.state.status = "Idle"
+if not hasattr(app.state, "statuses"):
+    app.state.statuses = {}
 
 def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: str, rag_category: str, rag_userid: str, login_username: str, login_password: str, llm_provider: str, llm_model: str, userid: str, firmid: str):
-    app.state.status = "Running background automation..."
+    session_key = f"{userid}_{firmid}"
+    app.state.statuses[session_key] = "Running background automation..."
     cmd = [
         "python", "playwright_worker.py", 
         "--prompt", prompt, 
@@ -44,11 +46,11 @@ def run_script(prompt: str, query: str, table_name: str, topic: str, subtopic: s
         )
         _, stderr = process.communicate()
         if process.returncode == 0:
-            app.state.status = "Completed Successfully. Check automation_status_worker.log for details."
+            app.state.statuses[session_key] = f"Completed Successfully. Check logs/automation_status_worker_{userid}_{firmid}.log for details."
         else:
-            app.state.status = f"Failed. Error: {stderr}"
+            app.state.statuses[session_key] = f"Failed. Error: {stderr}"
     except Exception as e:
-        app.state.status = f"Error starting process: {str(e)}"
+        app.state.statuses[session_key] = f"Error starting process: {str(e)}"
 
 @app.post("/start")
 async def start_generation(
@@ -68,17 +70,21 @@ async def start_generation(
 ):
     print(f"[BACKEND] Received start request. llm_provider={llm_provider}, llm_model={llm_model}")
     rag_userid = "1559"
-    if app.state.status == "Running background automation...":
+    session_key = f"{userid}_{firmid}"
+    
+    if app.state.statuses.get(session_key) == "Running background automation...":
         return JSONResponse({"message": "Already running! Please wait."})
     
-    # CLEAR PREVIOUS LOGS
-    if os.path.exists("automation_status_worker.log"):
+    # CLEAR PREVIOUS LOGS FOR THIS SESSION
+    os.makedirs("logs", exist_ok=True)
+    log_file_path = f"logs/automation_status_worker_{userid}_{firmid}.log"
+    if os.path.exists(log_file_path):
         try:
-            os.remove("automation_status_worker.log")
+            os.remove(log_file_path)
         except:
             pass
 
-    app.state.status = "Starting..."
+    app.state.statuses[session_key] = "Starting..."
     background_tasks.add_task(
         run_script, prompt, query, table_name, topic, subtopic, rag_category, rag_userid, login_username, login_password, llm_provider, llm_model, userid, firmid
     )
@@ -118,16 +124,19 @@ def get_mcp_keys(userid: str, firmid: str):
         return {"success": False, "error": str(e)}
 
 @app.get("/status")
-def get_status():
+def get_status(userid: str = "919", firmid: str = "5"):
+    session_key = f"{userid}_{firmid}"
+    status = app.state.statuses.get(session_key, "Idle")
     logs = ""
-    if os.path.exists("automation_status_worker.log"):
+    log_file_path = f"logs/automation_status_worker_{userid}_{firmid}.log"
+    if os.path.exists(log_file_path):
         try:
-            with open("automation_status_worker.log", "r", encoding="utf-8") as f:
+            with open(log_file_path, "r", encoding="utf-8") as f:
                 logs = "".join(f.readlines()[-15:])
         except:
             pass
     return {
-        "status": app.state.status,
+        "status": status,
         "logs": logs
     }
 

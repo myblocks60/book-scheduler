@@ -382,7 +382,9 @@ FINAL OUTPUT RULES:
         });
 
         setInterval(() => {
-            fetch(`${API_URL}/status`)
+            const userid = document.getElementById('userid').value || '919';
+            const firmid = document.getElementById('firmid').value || '5';
+            fetch(`${API_URL}/status?userid=${encodeURIComponent(userid)}&firmid=${encodeURIComponent(firmid)}`)
                 .then(res => res.json())
                 .then(data => {
                     document.querySelector('#status-box span').innerText = data.status;

@@ -92,9 +92,10 @@ def get_mcp_keys(userid: str, firmid: str):
         return JSONResponse({"success": False, "error": str(e)})
 
 @app.get("/status")
-def get_status():
+def get_status(userid: str = "919", firmid: str = "5"):
     try:
-        with urllib.request.urlopen(f"{BACKEND_URL_BASE}/status", context=ssl_context, timeout=10) as response:
+        url = f"{BACKEND_URL_BASE}/status?userid={urllib.parse.quote(userid)}&firmid={urllib.parse.quote(firmid)}"
+        with urllib.request.urlopen(url, context=ssl_context, timeout=10) as response:
             res_body = response.read()
             return JSONResponse(json.loads(res_body))
     except Exception as e:

@@ -68,8 +68,9 @@ CUSTOM_FIRMID = args.firmid
 # --- CONFIGURATION ---
 DOWNLOAD_DIR = Path("downloads")
 DATA_DIR = Path("data")
-LOG_FILE = "automation_status_worker.log"
-PROCESSED_FILE = DATA_DIR / "processed_roles.txt"
+os.makedirs("logs", exist_ok=True)
+LOG_FILE = f"logs/automation_status_worker_{CUSTOM_USERID}_{CUSTOM_FIRMID}.log"
+PROCESSED_FILE = DATA_DIR / f"processed_roles_{CUSTOM_USERID}_{CUSTOM_FIRMID}.txt"
 
 # URLs
 CINDEX_URL = "https://myblocks.in/book-gen/"
